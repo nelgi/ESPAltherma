@@ -179,7 +179,6 @@ void setup()
   Serial.begin(9600, SERIAL_8E1);
   #endif
   pinMode(PIN_THERM, OUTPUT);
-  digitalWrite(PIN_THERM, HIGH);
 
 #ifdef PIN_SG1
   //Smartgrid pins
