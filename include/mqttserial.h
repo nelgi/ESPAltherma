@@ -69,7 +69,9 @@ size_t MQTTSerial::write(const uint8_t *buffer, size_t size)
     if (WiFi.status() == WL_CONNECTED && _client!=nullptr &&_client->connected()){
         _client->publish(_topic,buffer,size);
     }
+    #ifdef ESP32
     Serial.write(buffer,size);
+    #endif
     return size;
 }
 

@@ -6,8 +6,13 @@
 #include <Arduino.h>
 #endif
 
+#ifdef ESP32
 #include <HardwareSerial.h>
 #include <WiFi.h>
+#elif ESP8266
+#include <ESP8266WiFi.h>
+#endif
+
 #include <PubSubClient.h>
 #include <ArduinoOTA.h>
 
@@ -16,6 +21,7 @@
 #include "converters.h"
 #include "comm.h"
 #include "mqtt.h"
+#define MQTT_LOG_TOPIC MQTT_BASE_TOPIC "/log"
 
 Converter converter;
 char registryIDs[32]; //Holds the registrys to query
@@ -95,15 +101,23 @@ void setup_wifi()
   delay(10);
   // We start by connecting to a WiFi network
   mqttSerial.printf("Connecting to %s\n", WIFI_SSID);
+  WiFi.hostname(HOSTNAME);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PWD);
   int i = 0;
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
+    #ifdef ESP32
     Serial.print(".");
+    #endif
     if (i++ == 100)
     {
+      #ifdef ESTP32
       esp_restart();
+      #elif ESP8266
+      ESP.restart();
+      #endif
     }
   }
   mqttSerial.printf("Connected. IP Address: %s\n", WiFi.localIP().toString().c_str());
@@ -157,9 +171,13 @@ void setupScreen(){
 
 void setup()
 {
+  #ifdef ESP32
   Serial.begin(115200);
   setupScreen();
   MySerial.begin(9600, SERIAL_8E1, RX_PIN, TX_PIN);
+  #elif ESP8266
+  Serial.begin(9600, SERIAL_8E1);
+  #endif
   pinMode(PIN_THERM, OUTPUT);
   digitalWrite(PIN_THERM, HIGH);
 
@@ -179,23 +197,26 @@ void setup()
   readEEPROM();//Restore previous state
   mqttSerial.print("Setting up wifi...");
   setup_wifi();
-  ArduinoOTA.setHostname("ESPAltherma");
+  ArduinoOTA.setHostname(HOSTNAME);
   ArduinoOTA.onStart([]() {
     busy = true;
   });
 
   ArduinoOTA.onError([](ota_error_t error) {
     mqttSerial.print("Error on OTA - restarting");
+    #ifdef ESTP32
     esp_restart();
+    #elif ESP8266
+    ESP.restart();
+    #endif
   });
   ArduinoOTA.begin();
 
   client.setServer(MQTT_SERVER, MQTT_PORT);
   client.setBufferSize(MAX_MSG_SIZE); //to support large json message
   client.setCallback(callback);
-  client.setServer(MQTT_SERVER, MQTT_PORT);
   mqttSerial.print("Connecting to MQTT server...");
-  mqttSerial.begin(&client, "espaltherma/log");
+  mqttSerial.begin(&client, MQTT_LOG_TOPIC);
   reconnect();
   mqttSerial.println("OK!");
 

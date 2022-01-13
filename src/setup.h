@@ -3,12 +3,15 @@
 #define WIFI_SSID "SSID"//**Your SSID here**
 #define WIFI_PWD "password"//**Your password here** leave empty if open (bad!)
 
-#define MQTT_SERVER "192.168.1.4"//**IP address here of your MQTT server**
+#define MQTT_SERVER "192.168.1.4"//**IP address or DNS name here of your MQTT server**
 #define MQTT_USERNAME ""//leave empty if not set (bad!)
 #define MQTT_PASSWORD ""//leave empty if not set (bad!)
+#define MQTT_BASE_TOPIC "espaltherma" //default 'espaltherma', change, if more than one instance in the same Home Assistant installation
 #define MQTT_PORT 1883
 
 #define FREQUENCY 30000 //query values every 30 sec
+
+#define HOSTNAME "ESPAltherma" //define hostname for OTA, default 'ESPAltherma'
 
 #if defined(ARDUINO_M5Stick_C) || defined(ARDUINO_M5Stick_C_Plus)
 //Values used when **M5StickC** or **M5STickCPlus** environment is selected:

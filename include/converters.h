@@ -45,11 +45,13 @@ public:
         int convId = def->convid;
         int num = def->dataSize;
         double dblData = NAN;
+        #ifdef ESP32
         Serial.print("Converting from:");
         for (size_t i = 0; i < num; i++)
         {
             Serial.printf(" 0x%02x ", data[i]);
         }
+        #endif
 
         switch (convId)
         {
@@ -70,7 +72,9 @@ public:
             break;
         case 105:
             dblData = (double)getSignedValue(data, num, 0) * 0.1;
+            #ifdef ESP32
             Serial.printf("%f\n", dblData);
+            #endif
             break;
         case 106:
             dblData = (double)getSignedValue(data, num, 1) * 0.1;
@@ -227,13 +231,17 @@ public:
         {
             sprintf(def->asString, "%g", dblData);
         }
+        #ifdef ESP32
         Serial.printf("-> %s\n", def->asString);
+        #endif
     }
 
 private:
     void convertTable300(char *data, int tableID, char *ret)
     {
+        #ifdef ESP32
         Serial.printf("Bin Conv %02x with tableID %d \n", data[0], tableID);
+        #endif
         char b = 1;
         b = (char)(b << tableID % 10);
         if ((data[0] & b) > 0)

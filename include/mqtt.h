@@ -17,7 +17,9 @@ PubSubClient client(espClient);
 
 void sendValues()
 {
+  #ifdef ESP32
   Serial.printf("Sending values in MQTT.\n");
+  #endif
 #ifdef ARDUINO_M5Stick_C
   //Add M5 APX values
   snprintf(jsonbuff + strlen(jsonbuff),MAX_MSG_SIZE - strlen(jsonbuff) , "\"%s\":\"%.3gV\",\"%s\":\"%gmA\",", "M5VIN", M5.Axp.GetVinVoltage(),"M5AmpIn", M5.Axp.GetVinCurrent());
@@ -62,11 +64,15 @@ void reconnect()
   int i = 0;
   while (!client.connected())
   {
+    #ifdef ESP32
     Serial.print("Attempting MQTT connection...");
+    #endif
 
     if (client.connect("ESPAltherma-dev", MQTT_USERNAME, MQTT_PASSWORD, MQTT_lwt, 0, true, "Offline"))
     {
+      #ifdef ESP32
       Serial.println("connected!");
+      #endif
       client.publish("homeassistant/sensor/espAltherma/config", "{\"name\":\"AlthermaSensors\",\"stat_t\":\"~/STATESENS\",\"avty_t\":\"~/LWT\",\"pl_avail\":\"Online\",\"pl_not_avail\":\"Offline\",\"uniq_id\":\"espaltherma\",\"device\":{\"identifiers\":[\"ESPAltherma\"]}, \"~\":\"espaltherma\",\"json_attr_t\":\"~/ATTR\"}", true);
       client.publish(MQTT_lwt, "Online", true);
       client.publish("homeassistant/switch/espAltherma/config", "{\"name\":\"Altherma\",\"cmd_t\":\"~/POWER\",\"stat_t\":\"~/STATE\",\"pl_off\":\"OFF\",\"pl_on\":\"ON\",\"~\":\"espaltherma\"}", true);
@@ -80,7 +86,9 @@ void reconnect()
     }
     else
     {
+      #ifdef ESP32
       Serial.printf("failed, rc=%d, try again in 5 seconds", client.state());
+      #endif
       unsigned long start = millis();
       while (millis() < start + 5000)
       {
@@ -88,8 +96,12 @@ void reconnect()
       }
 
       if (i++ == 100)
+        #ifdef ESP32
         Serial.printf("Tried for 500 sec, rebooting now.");
         esp_restart();
+        #elif ESP8266
+        ESP.restart();
+        #endif
     }
   }
 }
@@ -118,11 +130,17 @@ void callbackTherm(byte *payload, unsigned int length)
   { 
     mqttSerial.println("Rebooting");
     delay(100);
+    #ifdef ESP32
     esp_restart();
+    #elif ESP8266
+    ESP.restart();
+    #endif
   }  
   else
   {
+    #ifdef ESP32
     Serial.printf("Unknown message: %s\n", payload);
+    #endif
   }
 }
 
@@ -173,7 +191,9 @@ void callbackSg(byte *payload, unsigned int length)
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
+  #ifdef ESP32
   Serial.printf("Message arrived [%s] : %s\n", topic, payload);
+  #endif
 
   if (strcmp(topic, "espaltherma/POWER") == 0)
   {
@@ -187,6 +207,8 @@ void callback(char *topic, byte *payload, unsigned int length)
 #endif
   else
   {
+    #ifdef ESP32
     Serial.printf("Unknown topic: %s\n", topic);
+    #endif
   }
 }
