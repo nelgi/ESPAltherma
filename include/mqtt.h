@@ -1,7 +1,9 @@
 #include <PubSubClient.h>
 #include <EEPROM.h>
-#define MQTT_attr "espaltherma/ATTR"
-#define MQTT_lwt "espaltherma/LWT"
+#define MQTT_attr MQTT_BASE_TOPIC "/ATTR"
+#define MQTT_lwt MQTT_BASE_TOPIC "/LWT"
+#define MQTT_state MQTT_BASE_TOPIC "/STATE"
+#define MQTT_power MQTT_BASE_TOPIC "/POWER"
 
 #define EEPROM_CHK 1
 #define EEPROM_STATE 0
@@ -58,6 +60,53 @@ void readEEPROM(){
   }
 }
 
+String mqtt_topic(byte type){ // 0 - sensor, everything else switch
+  String topic;
+  topic.reserve(128);
+  topic = "homeassistant/";
+  if(type == 0) {
+    topic += "sensor/";
+  } else {
+    topic += "switch/";
+  }
+  topic += MQTT_BASE_TOPIC;
+  //topic += "-";
+  //topic += mac_address(); // for added uniqueness (Tasmota style)
+  topic += "/config";
+  return topic;
+}
+
+String mqtt_payload(byte type){ // 0 - sensor, everything else switch
+  String payload;
+  payload.reserve(384);
+  if(type == 0) {
+    payload = "{\"name\":\"Altherma Sensors\",\"stat_t\":\"~/SENSOR\",\"json_attr_t\":\"~/ATTR\"";
+  } else {
+    payload = "{\"name\":\"Altherma\",\"cmd_t\":\"~/POWER\",\"stat_t\":\"~/STATE\",\"pl_off\":\"OFF\",\"pl_on\":\"ON\"";
+  }
+  payload += ",\"avty_t\":\"~/LWT\",\"pl_avail\":\"Online\",\"pl_not_avail\":\"Offline\",\"uniq_id\":\"";
+  payload += mac_address(); // unique_id: AABBCC-sensor/switch
+  if(type == 0) {
+    payload += "_sensor";
+  } else {
+    payload += "_switch";
+  }
+  payload += "\",\"dev\":{\"ids\":[\"";
+  payload += mac_address(); // device identifier
+  payload += "\"]";
+  if(type == 0){
+    payload += ",\"name\":\"";
+    payload += HOSTNAME; // name of the device in HA
+    payload += "\"";
+  }
+  payload += "}, \"object_id\":\"";
+  payload += MQTT_BASE_TOPIC; // sensor name in HA
+  payload += "\", \"~\":\"";
+  payload += MQTT_BASE_TOPIC; // MQTT base topic
+  payload += "\"}";
+  return payload;
+}
+
 void reconnect()
 {
   // Loop until we're reconnected
@@ -68,17 +117,18 @@ void reconnect()
     Serial.print("Attempting MQTT connection...");
     #endif
 
-    if (client.connect("ESPAltherma-dev", MQTT_USERNAME, MQTT_PASSWORD, MQTT_lwt, 0, true, "Offline"))
+    if (client.connect(HOSTNAME, MQTT_USERNAME, MQTT_PASSWORD, MQTT_lwt, 0, true, "Offline"))
     {
       #ifdef ESP32
       Serial.println("connected!");
       #endif
-      client.publish("homeassistant/sensor/espAltherma/config", "{\"name\":\"AlthermaSensors\",\"stat_t\":\"~/STATESENS\",\"avty_t\":\"~/LWT\",\"pl_avail\":\"Online\",\"pl_not_avail\":\"Offline\",\"uniq_id\":\"espaltherma\",\"device\":{\"identifiers\":[\"ESPAltherma\"]}, \"~\":\"espaltherma\",\"json_attr_t\":\"~/ATTR\"}", true);
+      // Sensor
+      client.publish(mqtt_topic(0).c_str(),mqtt_payload(0).c_str(),true); // (0) = sensor
       client.publish(MQTT_lwt, "Online", true);
-      client.publish("homeassistant/switch/espAltherma/config", "{\"name\":\"Altherma\",\"cmd_t\":\"~/POWER\",\"stat_t\":\"~/STATE\",\"pl_off\":\"OFF\",\"pl_on\":\"ON\",\"~\":\"espaltherma\"}", true);
- 
+      // Switch
+      client.publish(mqtt_topic(1).c_str(),mqtt_payload(1).c_str(),true); // (1) = switch
       // Subscribe
-      client.subscribe("espaltherma/POWER");
+      client.subscribe(MQTT_power);
 #ifdef PIN_SG1
       client.publish("homeassistant/sg/espAltherma/config", "{\"name\":\"AlthermaSmartGrid\",\"cmd_t\":\"~/set\",\"stat_t\":\"~/state\",\"~\":\"espaltherma/sg\"}", true);
       client.subscribe("espaltherma/sg/set");
@@ -116,14 +166,14 @@ void callbackTherm(byte *payload, unsigned int length)
   { //turn off
     digitalWrite(PIN_THERM, HIGH);
     saveEEPROM(HIGH);
-    client.publish("espaltherma/STATE", "OFF");
+    client.publish(MQTT_state, "OFF");
     mqttSerial.println("Turned OFF");
   }
   else if (payload[1] == 'N')
   { //turn on
     digitalWrite(PIN_THERM, LOW);
     saveEEPROM(LOW);
-    client.publish("espaltherma/STATE", "ON");
+    client.publish(MQTT_state, "ON");
     mqttSerial.println("Turned ON");
   }
   else if (payload[0] == 'R')//R(eset/eboot)
@@ -195,7 +245,7 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.printf("Message arrived [%s] : %s\n", topic, payload);
   #endif
 
-  if (strcmp(topic, "espaltherma/POWER") == 0)
+  if (strcmp(topic, MQTT_power) == 0)
   {
     callbackTherm(payload, length);
   }

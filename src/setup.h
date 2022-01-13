@@ -1,3 +1,5 @@
+extern String mac_address(); // make mac_address() global
+
 //Setup your credentials and mqtt info here:
 //only change the value between the " " leave the rest of the line untouched.
 #define WIFI_SSID "SSID"//**Your SSID here**
