@@ -247,7 +247,7 @@ void setup()
 
   ArduinoOTA.onError([](ota_error_t error) {
     mqttSerial.print("Error on OTA - restarting");
-    #ifdef ESTP32
+    #ifdef ESP32
     esp_restart();
     #elif ESP8266
     ESP.restart();
