@@ -23,6 +23,13 @@
 #include "mqtt.h"
 #define MQTT_LOG_TOPIC MQTT_BASE_TOPIC "/log"
 
+#ifdef ONEWIRE_BUS
+#include <OneWire.h>
+#include <DallasTemperature.h>
+OneWire oneWire(ONEWIRE_BUS);        // Set up a OneWire instance to communicate with OneWire devices
+DallasTemperature OnewireSensors(&oneWire); // Create an instance of the temperature sensor class
+#endif
+
 Converter converter;
 char registryIDs[32]; //Holds the registrys to query
 bool busy = false;
@@ -181,6 +188,31 @@ String mac_address(){
   return macAddress;
 }
 
+#ifdef ONEWIRE_BUS
+void requestTemperatures(){
+  mqttSerial.print("Requesting temperatures...");
+  OnewireSensors.requestTemperatures(); // Send the command to get temperatures
+  // After we got the temperatures, we can print them here.
+  // We use the function ByIndex, and as an example get the temperature from the first sensor only.
+  float tempC = OnewireSensors.getTempCByIndex(0);
+  String mqttData = "{\"Dallastemperature\":";
+
+  // Check if reading was successful
+  if(tempC != DEVICE_DISCONNECTED_C) 
+  {
+    mqttSerial.printf("Temperature for the device 1 (index 0) is: %.2f",tempC);
+    mqttData += tempC;
+    mqttData += "}";
+    client.publish(MQTT_BASE_TOPIC "/OneWire", mqttData.c_str());
+    snprintf(jsonbuff + strlen(jsonbuff), MAX_MSG_SIZE - strlen(jsonbuff), "\"%s\":%.2f,", "Dallastemperature", tempC);
+  } 
+  else
+  {
+    mqttSerial.print("Error: Could not read temperature data");
+  }
+}
+#endif
+
 void setup()
 {
   #ifdef ESP32
@@ -233,6 +265,11 @@ void setup()
 
   initRegistries();
   mqttSerial.print("ESPAltherma started!");
+
+  #ifdef ONEWIRE_BUS
+  OnewireSensors.begin();
+  mqttSerial.printf("Number of OneWire devices: %u",OnewireSensors.getDeviceCount());
+  #endif  
 }
 
 void waitLoop(uint ms){
@@ -266,6 +303,9 @@ void loop()
       waitLoop(500);//wait .5sec between registries
     }
   }
+  #ifdef ONEWIRE_BUS
+  requestTemperatures();//OneWire bus request, before sendValues()!
+  #endif  
   sendValues();//Send the full json message
   mqttSerial.printf("Done. Waiting %d sec...\n", FREQUENCY / 1000);
   waitLoop(FREQUENCY);

@@ -27,6 +27,9 @@ extern String mac_address(); // make mac_address() global
 
 #define PIN_THERM 0// Pin connected to the thermostat relay (normally open)
 
+//Comment out the following line if no DallasTemperature sensors installed, DallasTemperature library must be included in 'platformio.ini' lib_deps!
+#define ONEWIRE_BUS 2 // OneWire Bus for DallasTemperature sensor(s), GPIO2 on ESP01S is usable (currently supports 1 sensor)
+
 //Smart grid control - Optional:
 //Uncomment and set to enable SG mqtt functions
 //#define PIN_SG1 32// Pin connected to dry contact SG 1 relay (normally open)
