@@ -19,7 +19,7 @@ extern String mac_address(); // make mac_address() global
 //Values used when **M5StickC** or **M5STickCPlus** environment is selected:
 #define RX_PIN    36// Pin connected to the TX pin of X10A 
 #define TX_PIN    26// Pin connected to the RX pin of X10A
-#else 
+#elif ESP32
 //Default GPIO PINs for Serial2:
 #define RX_PIN    16// Pin connected to the TX pin of X10A 
 #define TX_PIN    17// Pin connected to the RX pin of X10A
@@ -28,7 +28,7 @@ extern String mac_address(); // make mac_address() global
 #define PIN_THERM 0// Pin connected to the thermostat relay (normally open)
 
 //Comment out the following line if no DallasTemperature sensors installed, DallasTemperature library must be included in 'platformio.ini' lib_deps!
-#define ONEWIRE_BUS 2 // OneWire Bus for DallasTemperature sensor(s), GPIO2 on ESP01S is usable (currently supports 1 sensor)
+#define ONEWIRE_BUS 3 // OneWire Bus for DallasTemperature sensor(s), GPIO2 on ESP01S, GPIO3 on NodeMCU are usable (currently supports 1 sensor on a bus)
 
 //Smart grid control - Optional:
 //Uncomment and set to enable SG mqtt functions
