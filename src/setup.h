@@ -14,7 +14,7 @@
 //Values used when **M5StickC** or **M5STickCPlus** environment is selected:
 #define RX_PIN    36// Pin connected to the TX pin of X10A 
 #define TX_PIN    26// Pin connected to the RX pin of X10A
-#else 
+#elif ESP32
 //Default GPIO PINs for Serial2:
 #define RX_PIN    16// Pin connected to the TX pin of X10A 
 #define TX_PIN    17// Pin connected to the RX pin of X10A
