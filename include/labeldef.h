@@ -1,4 +1,6 @@
+#ifdef ESP32
 #include <pgmspace.h>
+#endif
 #define LABELDEF
 
 class LabelDef
