@@ -4,6 +4,7 @@
 #define MQTT_lwt MQTT_BASE_TOPIC "/LWT"
 #define MQTT_state MQTT_BASE_TOPIC "/STATE"
 #define MQTT_power MQTT_BASE_TOPIC "/POWER"
+#define MQTT_SENSORSTATE_TOPIC MQTT_BASE_TOPIC "/SENSOR"
 
 #define EEPROM_CHK 1
 #define EEPROM_STATE 0
@@ -16,6 +17,13 @@ char jsonbuff[MAX_MSG_SIZE] = "{\0";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+char sensorstate[MAX_SENSORSTATE_SIZE] = "{\0";
+void sendSensorState(){
+  sensorstate[strlen(sensorstate) - 1] = '}';
+  client.publish(MQTT_SENSORSTATE_TOPIC, sensorstate);
+  strcpy(sensorstate, "{\0");
+}
 
 void sendValues()
 {
@@ -80,7 +88,7 @@ String mqtt_payload(byte type){ // 0 - sensor, everything else switch
   String payload;
   payload.reserve(384);
   if(type == 0) {
-    payload = "{\"name\":\"Altherma Sensors\",\"stat_t\":\"~/SENSOR\",\"json_attr_t\":\"~/ATTR\",\"unit_of_meas\":\"%\",\"val_tpl\":\"{{value_json.RSSI}}\"";
+    payload = "{\"name\":\"Altherma Sensors\",\"stat_t\":\"~/SENSOR\",\"json_attr_t\":\"~/ATTR\",\"unit_of_meas\":\"%\",\"val_tpl\":\"{{value_json.['RSSI']}}\"";
   } else {
     payload = "{\"name\":\"Altherma\",\"cmd_t\":\"~/POWER\",\"stat_t\":\"~/STATE\",\"pl_off\":\"OFF\",\"pl_on\":\"ON\"";
   }

@@ -213,9 +213,20 @@ void requestTemperatures(){
 }
 #endif
 
-void getRSSI(){
+void getSensorStatus(){
   int rssi = WiFi.RSSI();
-  snprintf(jsonbuff + strlen(jsonbuff), MAX_MSG_SIZE - strlen(jsonbuff), "\"%s\":%i,", "RSSI", rssi);
+  int quality = 0;
+  if (rssi <= -100) { 
+    quality = 0; 
+  } else if (rssi >= -50) { 
+    quality = 100; 
+  } else { 
+    quality = 2 * (rssi + 100); 
+  } 
+
+  snprintf(sensorstate + strlen(sensorstate), MAX_SENSORSTATE_SIZE - strlen(sensorstate), "\"%s\":%i,", "RSSI", quality);
+  snprintf(sensorstate + strlen(sensorstate), MAX_SENSORSTATE_SIZE - strlen(sensorstate), "\"%s\":\"%s\",", "IPAdress", WiFi.localIP().toString().c_str());
+  snprintf(sensorstate + strlen(sensorstate), MAX_SENSORSTATE_SIZE - strlen(sensorstate), "\"%s\":\"%s\",", "Hostname", HOSTNAME);
 }
 
 void setup()
@@ -311,8 +322,9 @@ void loop()
   #ifdef ONEWIRE_BUS
   requestTemperatures();//Include OneWire bus request in json, before sendValues()!
   #endif
-  getRSSI();//Include RSSI in json
   sendValues();//Send the full json message
+  getSensorStatus(); //Include SensorStatus in json
+  sendSensorState();
   mqttSerial.printf("Done. Waiting %d sec...\n", FREQUENCY / 1000);
   waitLoop(FREQUENCY);
 }
