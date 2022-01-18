@@ -213,6 +213,11 @@ void requestTemperatures(){
 }
 #endif
 
+void getRSSI(){
+  int rssi = WiFi.RSSI();
+  snprintf(jsonbuff + strlen(jsonbuff), MAX_MSG_SIZE - strlen(jsonbuff), "\"%s\":%i,", "RSSI", rssi);
+}
+
 void setup()
 {
   #ifdef ESP32
@@ -304,8 +309,9 @@ void loop()
     }
   }
   #ifdef ONEWIRE_BUS
-  requestTemperatures();//OneWire bus request, before sendValues()!
-  #endif  
+  requestTemperatures();//Include OneWire bus request in json, before sendValues()!
+  #endif
+  getRSSI();//Include RSSI in json
   sendValues();//Send the full json message
   mqttSerial.printf("Done. Waiting %d sec...\n", FREQUENCY / 1000);
   waitLoop(FREQUENCY);
