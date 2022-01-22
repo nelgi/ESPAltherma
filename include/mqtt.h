@@ -37,7 +37,11 @@ void sendValues()
   snprintf(jsonbuff + strlen(jsonbuff),MAX_MSG_SIZE - strlen(jsonbuff) , "\"%s\":\"%.3gmW\",", "M5BatPwr", M5.Axp.GetBatPower());
 #endif  
 
-  jsonbuff[strlen(jsonbuff) - 1] = '}';
+  if(strlen(jsonbuff) > 1) {
+    jsonbuff[strlen(jsonbuff) - 1] = '}';
+  } else {
+    strcat(jsonbuff,"}");
+  }
 #ifdef JSONTABLE
   strcat(jsonbuff,"]");
 #endif
