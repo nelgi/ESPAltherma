@@ -181,7 +181,7 @@ String mac_address(){
   macAddress.reserve(6);
   byte mac[6]; 
   WiFi.macAddress(mac);
-  for (int i = 2; i >= 0; i--) {
+  for (int i = 3; i <= 5; i++) {
     macAddress += String(mac[i], HEX);
   }
   macAddress.toUpperCase();
