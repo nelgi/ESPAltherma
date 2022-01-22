@@ -88,7 +88,7 @@ String mqtt_payload(byte type){ // 0 - sensor, everything else switch
   String payload;
   payload.reserve(384);
   if(type == 0) {
-    payload = "{\"name\":\"Altherma Sensors\",\"stat_t\":\"~/SENSOR\",\"json_attr_t\":\"~/ATTR\",\"unit_of_meas\":\"%\",\"val_tpl\":\"{{value_json.['RSSI']}}\"";
+    payload = "{\"name\":\"Altherma Sensors\",\"stat_t\":\"~/SENSOR\",\"json_attr_t\":\"~/ATTR\",\"unit_of_meas\":\"%\",\"val_tpl\":\"{{value_json['RSSI']}}\"";
   } else {
     payload = "{\"name\":\"Altherma\",\"cmd_t\":\"~/POWER\",\"stat_t\":\"~/STATE\",\"pl_off\":\"OFF\",\"pl_on\":\"ON\"";
   }
