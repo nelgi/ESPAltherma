@@ -5,12 +5,10 @@
 #else
 #include <Arduino.h>
 #endif
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 
 #ifdef ESP32
 #include <HardwareSerial.h>
-#include <WiFi.h>
-#elif ESP8266
-#include <ESP8266WiFi.h>
 #endif
 
 #include <PubSubClient.h>
@@ -30,6 +28,7 @@ OneWire oneWire(ONEWIRE_BUS);        // Set up a OneWire instance to communicate
 DallasTemperature OnewireSensors(&oneWire); // Create an instance of the temperature sensor class
 #endif
 
+WiFiManager wm;
 Converter converter;
 char registryIDs[32]; //Holds the registrys to query
 bool busy = false;
@@ -86,6 +85,7 @@ uint16_t loopcount =0;
 void extraLoop()
 {
   client.loop();
+  wm.process();
   ArduinoOTA.handle();
   while (busy)
   { //Stop processing during OTA
@@ -107,26 +107,12 @@ void setup_wifi()
 {
   delay(10);
   // We start by connecting to a WiFi network
-  mqttSerial.printf("Connecting to %s\n", WIFI_SSID);
-  WiFi.hostname(HOSTNAME);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PWD);
-  int i = 0;
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    #ifdef ESP32
-    Serial.print(".");
-    #endif
-    if (i++ == 100)
-    {
-      #ifdef ESTP32
-      esp_restart();
-      #elif ESP8266
-      ESP.restart();
-      #endif
-    }
-  }
+  WiFi.hostname(HOSTNAME);
+  wm.setDebugOutput(false); //no debug on serial
+  wm.autoConnect(HOSTNAME, "12345678"); //AP for setup
+  wm.setClass("invert"); //Dark theme
+  wm.startWebPortal();
   mqttSerial.printf("Connected. IP Address: %s\n", WiFi.localIP().toString().c_str());
 }
 
